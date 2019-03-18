@@ -13,10 +13,7 @@ const HelloWorld2 = () => {
     return <h1>Hello World! [func style]</h1>
 }
 
-class HelloWorld3 extends Component {
-    shouldComponentUpdate(nextProps, nextState) {
-        //do nothing by now
-    }
+class HelloWorld3 extends PureComponent {
     render() {
         return (
             <h1>Hello World! [Pure Component]</h1>
@@ -24,5 +21,10 @@ class HelloWorld3 extends Component {
     }
 }
 
-ReactDOM.render(<div><HelloWorld /> <HelloWorld2 /> <HelloWorld3 /></div>, document.getElementById("index"));
-ReactDOM.render(React.createElement("h1", null, "Hello World! [createElement]"), document.getElementById("index2"));
+class HelloWorld4 extends Component {
+    render() {
+        return React.createElement("h1", null, "Hello World! [createElement]");
+    }
+}
+
+ReactDOM.render(<div><HelloWorld /> <HelloWorld2 /> <HelloWorld3 /> <HelloWorld4 /></div>, document.getElementById("index"));
