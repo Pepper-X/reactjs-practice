@@ -5,6 +5,18 @@ const htmlPlugin = new HtmlWebPackPlugin({
     filename: "./index.html"
 });
 
+const OptimizeJsPlugin = require("optimize-js-plugin");
+
+var environment = process.env.NODE_ENV;
+
+var plugins = [htmlPlugin];
+
+if (environment === "production") {
+    plugins.push(new OptimizeJsPlugin({
+        sourceMap: false
+    }));
+}
+
 module.exports = {
     entry: './src/index.jsx',
 
@@ -24,5 +36,5 @@ module.exports = {
         ]
     },
     //stats: "verbose",
-    plugins: [htmlPlugin]
+    plugins: plugins
 };
