@@ -1,5 +1,6 @@
 import React, { Component, PureComponent } from "react";
 import ReactDOM from "react-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const SEARCH = "search", DETAILS = "details";
 const TITLE = "title", GENRE = "genre";
@@ -10,7 +11,7 @@ const ActionButton = (props) => {
         backgroundColor: props.bgColor? props.bgColor : 'red',
         color: props.color ? props.color : 'white'
     }
-    return <button style={style} onClick={props.action} > {props.name} </button>
+    return <button className={props.className} style={style} onClick={props.action} > {props.name} </button>
 }
 
 class MovieSearch extends Component {
@@ -19,9 +20,28 @@ class MovieSearch extends Component {
         this.state ={
             searchBy: TITLE,
             sortBy: RELEASE_DATE,
-            search: ""
+            search: "",
+            prevSearch: {},
+            foundNumber: 0
         };
     }
+    
+    grabMovies(searchOps) {
+        let url = new URL("http://reactjs-cdp.herokuapp.com/movies");
+        Object.keys(searchOps).forEach(key => url.searchParams.append(key, searchOps[key]));
+        let self = this;
+        fetch(url, {method: 'GET'}).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            let movies = data.data;
+            movies.map(m => console.log(m));
+            self.setState({
+                foundNumber : data.total,
+                prevSearch : searchOps
+            });
+        });
+    }
+    
     doSearch() {
         if (this.state.search == "") {
             return null;
@@ -33,44 +53,72 @@ class MovieSearch extends Component {
             search : this.state.search,
             limit : 10
         };
-        let url = new URL("http://reactjs-cdp.herokuapp.com/movies");
-        Object.keys(searchOps).forEach(key => url.searchParams.append(key, searchOps[key]));
-        fetch(url, {method: 'GET'}).then(function(response) {
-            return response.json();
-        }).then(function(data) {
-            let movies = data.data;
-            movies.map(m => console.log(m));
-        });
+        this.grabMovies(searchOps);
     }
+    
     switchSearchBy() {
         this.setState((state, props) => {
             return { searchBy : state.searchBy === TITLE ? GENRE : TITLE };
         });
     }
+    
+    switchSortBy() {
+        var self = this;
+        this.setState((state, props) => {
+            return { sortBy : state.sortBy === VOTE_AVERAGE ? RELEASE_DATE : VOTE_AVERAGE };
+        }, () => {
+            if (this.state.foundNumber == 0) {
+                return;
+            }
+            let searchOps = this.state.prevSearch;
+            searchOps.sortBy = this.state.sortBy;
+            this.grabMovies(searchOps);
+        });
+    }
+    
     updateSearch(event) {
         this.setState({
             search : event.target.value
         });
     }
+    
     render() {
         let titleBgColor = this.state.searchBy === TITLE ? 'red' : 'grey';
         let genreBgColor = this.state.searchBy === TITLE ? 'grey' : 'red';
         
+        let releaseDateColor = this.state.sortBy === VOTE_AVERAGE ? 'grey' : 'red';
+        let ratingColor = this.state.sortBy === VOTE_AVERAGE ? 'red' : 'grey';
+        
         let searchButtonStyle = {float: 'right'};
         let searchFieldStyle = {width: '100%'};
+        let left = {float: left};
+        let right = {float: right};
+        let redLine = {borderTop: '1px solid red', paddingTop: 10};
         return (
             <>
-            <h1> FIND YOUR MOVIE </h1>
+            <h5> FIND YOUR MOVIE </h5>
             <input type="search" value = {this.state.search} onChange = {this.updateSearch.bind(this)} style={searchFieldStyle}/>
-            <div>
-                <span> SEARCH BY </span>
-                <ActionButton name={TITLE} bgColor={titleBgColor} action={this.switchSearchBy.bind(this)} />
-                <ActionButton name={GENRE} bgColor={genreBgColor} action={this.switchSearchBy.bind(this)} />
-                
-                <div style={searchButtonStyle}>
-                    <ActionButton name={'SEARCH'} action={this.doSearch.bind(this)} />
+            <div style={redLine}>
+                <div>
+                    <span> SEARCH BY </span>
+                    <ActionButton name={TITLE} bgColor={titleBgColor} action={this.switchSearchBy.bind(this)} className={'btn'} />
+                    &nbsp;
+                    <ActionButton name={GENRE} bgColor={genreBgColor} action={this.switchSearchBy.bind(this)} className={'btn'} />
+                    
+                    <div style={searchButtonStyle}>
+                        <ActionButton name={'SEARCH'} action={this.doSearch.bind(this)} className={'btn-lg'} />
+                    </div>
                 </div>
             </div>
+            <div style={right}>
+                <div style={left}>
+                    <span>{this.state.foundNumber} movies found</span>
+                </div>
+                <span>Sort by</span>
+                <ActionButton name={'release date'} bgColor={'white'} color={releaseDateColor} action={this.switchSortBy.bind(this)} />
+                <ActionButton name={'rating'} bgColor={'white'} color={ratingColor} action={this.switchSortBy.bind(this)} />
+            </div>
+            
             </>
         );
     }
